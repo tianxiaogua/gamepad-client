@@ -9,6 +9,17 @@ class c_wired_connect:  # 有线连接
     def __init__(self):
         self.run_status = 1
 
+    def refresh_serial_port(self):  # 刷新串口
+        ports_list = list(serial.tools.list_ports.comports())
+        if len(ports_list) <= 0:
+            print("无串口设备。")
+            return 0
+        else:
+            # print("可用的串口设备如下：")
+            # for comport in ports_list:
+            #     print(list(comport)[0], list(comport)[1])
+            return ports_list
+
     def communication_handle(self, threadName): # 通信
         print("create", threadName)
         while self.run_status:
@@ -23,10 +34,11 @@ class c_wired_connect:  # 有线连接
                 print("可用的串口设备如下：")
                 for comport in ports_list:
                     print(list(comport)[0], list(comport)[1])
-            time.sleep(1)
+            time.sleep(5)
 
     def init_wired_connect(self):
-        _thread.start_new_thread(self.communication_handle, ("Thread-window", ))
+        # _thread.start_new_thread(self.communication_handle, ("Thread-window", ))
+        pass
 
     def deinit_wired_connect(self):
         self.run_status = 0

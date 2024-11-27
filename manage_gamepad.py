@@ -20,7 +20,7 @@ class c_gamepad_manage:
             # 释放左肩按钮
             gamepad.release_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
             gamepad.update()
-            time.sleep(0.5)
+            time.sleep(3)
         # 重置游戏手柄状态
         gamepad.reset()
         gamepad.update()

@@ -23,11 +23,17 @@ vgamepad 作者：方块味的菠萝酱 https://www.bilibili.com/read/cv29824471
 
 [用 Python 玩转串口（基于 pySerial）_python打开串口-CSDN博客](https://blog.csdn.net/bryanwang_3099/article/details/120493736)
 
+[python获取wifi列表_mob649e81630984的技术博客_51CTO博客](https://blog.51cto.com/u_16175494/11976110)
+
 
 
 直接安装 `vgamepad`
 
 ```shell
 pip install vgamepad
+```
+
+```
+pip install pywifi
 ```
 

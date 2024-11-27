@@ -16,4 +16,5 @@ if __name__=="__main__":
     wired_connect.init_wired_connect()
     gamepad_manage.init_gamepad_manage()
     window_manage.close_window_register(close_app)
+    window_manage.refresh_serial_register(wired_connect.refresh_serial_port)
     window_manage.create_window_handle()
