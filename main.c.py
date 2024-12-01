@@ -16,5 +16,12 @@ if __name__=="__main__":
     wired_connect.init_wired_connect()
     gamepad_manage.init_gamepad_manage()
     window_manage.close_window_register(close_app)
-    window_manage.refresh_serial_register(wired_connect.refresh_serial_port)
+    window_manage.communicat_serial_register(refresh=wired_connect.refresh_serial_port,
+                                             connect=wired_connect.connect_serial,
+                                             status=wired_connect.get_connect_status,
+                                             disconnect=wired_connect.disconnect_serial,
+                                             write=0,
+                                             read=0)
+    serial_recv_data_cb_register()
+
     window_manage.create_window_handle()

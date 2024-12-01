@@ -10,31 +10,47 @@ from cmp_wifi import *
 class c_window_manage:  # 窗口管理
     p_window = 0
     def_function = 0
-    def_function_refresh_serial = 0
+
     text_box_serial_display = 0
     tupleVar = ['COM8 蓝牙链接上的标准串行 (COM8)', 'java', 'C', 'C++', 'C#']
-    wifi_password = 0
     test_wifi_name = 0
     test_wifi_pass = 0
     ports_list = 0
+    serial_connect_status = 0
 
     def __init__(self):
         self.p_window = tk.Tk()  # 创建一个窗口，因为后面还要用到所以用window这个变量来赋值，可以自行更改
         self.wifi_password = "0"
+        self.serial_bite = 0
         self.test_wifi_pass = 0
         self.test_wifi_name = 0
         self.ports_list = 0
+
+        self.serial_connect_status = 0
+        self.serial_connect_button = 0
+        self.serial_bit_textbox = 0
+        self.target_serial = 0
+        self.target_serial_rate = 0
+        self.connect_serial_cb = 0
+        self.refresh_serial_cb = 0
+        self.get_connect_status_cb = 0
+        self.disconnect_serial_cb = 0
+
         # self.tupleVar = 0
         self.optionMenu_serial = 0
         self.dropdown_serial = 0
+
+
 
     def close_window_register(self, func):
         print("register close window")
         self.def_function = func
 
-    def refresh_serial_register(self, func):
-        print("register refresh serial")
-        self.def_function_refresh_serial = func
+    def communicat_serial_register(self, connect, disconnect, refresh, status, write, read):
+        self.refresh_serial_cb = refresh
+        self.connect_serial_cb = connect
+        self.get_connect_status_cb = status
+        self.disconnect_serial_cb = disconnect
 
     def close_window(self):
         self.p_window.destroy()
@@ -43,7 +59,7 @@ class c_window_manage:  # 窗口管理
 
     def win_fun_reset_serial(self):  # 刷新串口列表 Refreshing the serial port list
         print("刷新串口列表")
-        self.ports_list = self.def_function_refresh_serial()
+        self.ports_list = self.refresh_serial_cb()
         self.tupleVar = []
         for comport in self.ports_list:
             # print(list(comport)[0], list(comport)[1])
@@ -54,6 +70,38 @@ class c_window_manage:  # 窗口管理
         for op in self.tupleVar:
             self.optionMenu_serial['menu'].add_command(label=op, command=lambda x=op: v.set(x))
         v.set(self.tupleVar[0])
+
+    def win_fun_connect_serial(self):
+        if self.serial_connect_status:
+            self.disconnect_serial_cb()
+            ret = self.get_connect_status_cb()
+            if ~ret:
+                self.serial_connect_button.config(text="断开")
+                self.serial_connect_status = 0
+                self.win_fun_insert_serial_text("断开\n")
+        else:
+            for comport in self.ports_list:
+                if self.dropdown_serial.get() == ("" + list(comport)[0] + list(comport)[1]):
+                    print(list(comport)[0] + list(comport)[1])
+                    self.dropdown_serial.set(list(comport)[0])
+                    print(list(comport)[1])
+                    self.target_serial = list(comport)[0]
+            self.target_serial_rate = self.serial_bit_textbox.get("1.0", "end")  # 获取文本输入框的内容
+            self.win_fun_insert_serial_text("连接串口:"+self.target_serial+"  bate:"+self.target_serial_rate)
+            self.connect_serial_cb(self.target_serial, int(self.target_serial_rate))
+            ret = self.get_connect_status_cb()
+            if ret:
+                self.win_fun_insert_serial_text("串口已连接\n")
+                self.serial_connect_button.config(text="连接")
+                self.win_fun_insert_serial_text("连接\n")
+                self.serial_connect_status = 1
+            else:
+                self.win_fun_insert_serial_text("串口连接失败\n")
+                self.serial_connect_status = 0
+
+
+        # self.p_window.update()
+
 
 
     def win_fun_reset_text_serial(self):
@@ -78,15 +126,6 @@ class c_window_manage:  # 窗口管理
         self.optionMenu_serial.place(x=x_, y=y_, width=120)
         # optionMenu.pack()
 
-    def win_view_button_reset_serial(self, x_=200, y_=200):
-        button = tk.Button(self.p_window, text="刷新串口", command=self.win_fun_reset_serial)
-        button.place(x=x_, y=y_)
-        # button.pack()
-
-    def win_view_button_clean_serial(self, x_=200, y_=200):
-        button = tk.Button(self.p_window, text="清除串口", command=self.win_fun_reset_text_serial)
-        button.place(x=x_, y=y_)
-        # button.pack()
 
     def win_view_text_serial(self, x_=20, y_=10):
         # 创建文本框
@@ -94,6 +133,24 @@ class c_window_manage:  # 窗口管理
         self.text_box_serial_display.pack()  # 将文本框添加到窗口
         self.text_box_serial_display.place(x=x_, y=y_, width=600, height=400)
         # self.text_box_serial_display.configure(state='disabled')
+
+    def win_view_serial_set(self, x_=10, y_=12):
+        button = tk.Button(self.p_window, text="刷新串口", command=self.win_fun_reset_serial)
+        button.place(x=x_, y=y_)
+        # button.pack()
+
+        lable_wifi = tk.Label(self.p_window, text='波特率:')
+        lable_wifi.place(x=x_, y=y_+50)
+
+        self.serial_bit_textbox = tk.Text(self.p_window)  # 创建文本框，指定宽和高
+        self.serial_bit_textbox.place(x=x_+80, y=y_+50, width=116, height=25)
+
+        self.serial_connect_button = tk.Button(self.p_window, text="断开", command=self.win_fun_connect_serial)
+        self.serial_connect_button.place(x=x_, y=y_+50+50)
+
+        button = tk.Button(self.p_window, text="清除", command=self.win_fun_reset_text_serial)
+        button.place(x=x_, y=y_+50+50+50)
+        # button.pack()
 
     def win_view_wifi_set(self, x_=10, y_=110):
         lable_wifi = tk.Label(self.p_window, text='wifi:')
@@ -120,10 +177,11 @@ class c_window_manage:  # 窗口管理
         self.p_window.resizable(False, False)
 
         self.win_view_dropdown_serial(x_=90, y_=10)  # 显示下拉框选择串口
-        self.win_view_button_reset_serial(x_=10, y_=12)  # 显示按钮 用于刷新串口
+
+        self.win_view_serial_set(x_=10, y_=12)  # 显示串口部分
+
         self.win_view_text_serial(x_=220, y_=12)  # 显示串口接收文本框
-        self.win_view_button_clean_serial(x_=10, y_=60)  # 显示清除串口按钮
-        self.win_view_wifi_set(x_=10, y_=110)  # 显示设置WiFi部分
+        self.win_view_wifi_set(x_=10, y_=170)  # 显示设置WiFi部分
 
         self.p_window.protocol("WM_DELETE_WINDOW", self.close_window)  # 接收到关闭点击操作的语句
         self.p_window.mainloop()  # 必须一直更新窗口，不然会未响应，如果要自行更新，可以用window.update()

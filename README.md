@@ -37,3 +37,7 @@ pip install vgamepad
 pip install pywifi
 ```
 
+```
+python -m pip install comtypes
+```
+
