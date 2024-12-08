@@ -6,6 +6,8 @@ import serial
 import serial.tools.list_ports
 import tkinter as tk  # 要使用，先导入
 from cmp_wifi import *
+from tkinter import *
+from cmp_setting import app_set
 
 class c_window_manage:  # 窗口管理
     p_window = 0
@@ -35,22 +37,33 @@ class c_window_manage:  # 窗口管理
         self.refresh_serial_cb = 0
         self.get_connect_status_cb = 0
         self.disconnect_serial_cb = 0
+        self.serial_write_cb = 0
 
         # self.tupleVar = 0
         self.optionMenu_serial = 0
         self.dropdown_serial = 0
 
+        self.setting = app_set()
 
 
     def close_window_register(self, func):
         print("register close window")
         self.def_function = func
 
-    def communicat_serial_register(self, connect, disconnect, refresh, status, write, read):
+    def communicat_serial_register(self, connect, disconnect, refresh, status, write):
         self.refresh_serial_cb = refresh
         self.connect_serial_cb = connect
         self.get_connect_status_cb = status
         self.disconnect_serial_cb = disconnect
+        self.serial_write_cb = write
+
+    def communicat_serial_write(self, data):
+        if self.serial_write_cb!=0:
+            if not isinstance(data, str):
+                data = str(data)  # 将数据转换为字符串
+            self.serial_write_cb(data.encode())
+        else:
+            print("error!")
 
     def close_window(self):
         self.p_window.destroy()
@@ -87,6 +100,7 @@ class c_window_manage:  # 窗口管理
                     print(list(comport)[1])
                     self.target_serial = list(comport)[0]
             self.target_serial_rate = self.serial_bit_textbox.get("1.0", "end")  # 获取文本输入框的内容
+            self.setting.update_setting(his_serial_rate=self.target_serial_rate) # 把波特率储存到设置文件里
             self.win_fun_insert_serial_text("连接串口:"+self.target_serial+"  bate:"+self.target_serial_rate)
             self.connect_serial_cb(self.target_serial, int(self.target_serial_rate))
             ret = self.get_connect_status_cb()
@@ -109,6 +123,7 @@ class c_window_manage:  # 窗口管理
 
     def win_fun_insert_serial_text(self, text=""):
         self.text_box_serial_display.insert(tk.END, text)
+        self.text_box_serial_display.see(END)
 
     def win_fun_choose_text_serial(self, dropdown):
         print("choose:", dropdown)
@@ -116,7 +131,11 @@ class c_window_manage:  # 窗口管理
     def win_fun_wifi_connect(self):
         self.wifi_password = self.test_wifi_pass.get("1.0", "end")  # 获取文本输入框的内容
         print("pass word:",self.wifi_password)  # 输出结果
-        self.win_fun_insert_serial_text("发送WiFi->ssid:"+self.test_wifi_name+" password:"+self.wifi_password)
+        serial_data = "发送WiFi->ssid:"+self.test_wifi_name+" password:"+self.wifi_password
+        self.win_fun_insert_serial_text(serial_data)
+        self.communicat_serial_write(serial_data)
+
+        self.setting.update_setting(his_wifi_password=self.wifi_password)  # 把波特率储存到设置文件里
 
     def win_view_dropdown_serial(self, x_=200, y_=200):
         self.dropdown_serial = tk.StringVar()
@@ -133,6 +152,11 @@ class c_window_manage:  # 窗口管理
         self.text_box_serial_display.pack()  # 将文本框添加到窗口
         self.text_box_serial_display.place(x=x_, y=y_, width=600, height=400)
         # self.text_box_serial_display.configure(state='disabled')
+        self.text_box_serial_display.see(END)
+
+        # 滚动条
+        scrollbar = tk.Scrollbar(self.p_window, command=self.text_box_serial_display.yview)
+        scrollbar.place(x=x_+600, y=y_, width=20, height=400)
 
     def win_view_serial_set(self, x_=10, y_=12):
         button = tk.Button(self.p_window, text="刷新串口", command=self.win_fun_reset_serial)
@@ -144,7 +168,8 @@ class c_window_manage:  # 窗口管理
 
         self.serial_bit_textbox = tk.Text(self.p_window)  # 创建文本框，指定宽和高
         self.serial_bit_textbox.place(x=x_+80, y=y_+50, width=116, height=25)
-
+        if self.setting.his_serial_rate != 0:
+            self.serial_bit_textbox.insert(tk.END, self.setting.his_serial_rate)
         self.serial_connect_button = tk.Button(self.p_window, text="断开", command=self.win_fun_connect_serial)
         self.serial_connect_button.place(x=x_, y=y_+50+50)
 
@@ -165,6 +190,8 @@ class c_window_manage:  # 窗口管理
 
         self.test_wifi_pass = tk.Text(self.p_window)  # 创建文本框，指定宽和高
         self.test_wifi_pass.place(x=x_ + 40, y=y_+30, width=150, height=25)
+        if self.setting.his_wifi_password != 0:
+            self.test_wifi_pass.insert(tk.END, self.setting.his_wifi_password)
 
         button = tk.Button(self.p_window, text="确定", command=self.win_fun_wifi_connect)
         button.place(x=x_, y=y_+65)
@@ -173,7 +200,7 @@ class c_window_manage:  # 窗口管理
         print("create thread")
 
         self.p_window.title("win")
-        self.p_window.geometry("840x700+300+300")
+        self.p_window.geometry("850x700+300+300")
         self.p_window.resizable(False, False)
 
         self.win_view_dropdown_serial(x_=90, y_=10)  # 显示下拉框选择串口
@@ -181,9 +208,13 @@ class c_window_manage:  # 窗口管理
         self.win_view_serial_set(x_=10, y_=12)  # 显示串口部分
 
         self.win_view_text_serial(x_=220, y_=12)  # 显示串口接收文本框
+
         self.win_view_wifi_set(x_=10, y_=170)  # 显示设置WiFi部分
 
         self.p_window.protocol("WM_DELETE_WINDOW", self.close_window)  # 接收到关闭点击操作的语句
+
+        self.win_fun_reset_serial() # 程序启动刷新
+        
         self.p_window.mainloop()  # 必须一直更新窗口，不然会未响应，如果要自行更新，可以用window.update()
         print("close window")
 

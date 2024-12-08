@@ -20,8 +20,8 @@ if __name__=="__main__":
                                              connect=wired_connect.connect_serial,
                                              status=wired_connect.get_connect_status,
                                              disconnect=wired_connect.disconnect_serial,
-                                             write=0,
-                                             read=0)
-    serial_recv_data_cb_register()
+                                             write=wired_connect.serial_write
+                                             )
+    wired_connect.serial_recv_data_cb_register(recv_func=window_manage.win_fun_insert_serial_text)
 
     window_manage.create_window_handle()

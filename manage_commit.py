@@ -4,21 +4,31 @@ import time
 import _thread
 
 class c_wired_connect:  # 有线连接
-
     def __init__(self):
         self.run_status = 1
         self.serial_ = 1
         self.handle_recv_cb = 0 # 处理接收回调函数
-        self.handle_write_cb = 0
 
-    def serial_recv_data_cb_register(self, recv_func, write_func):
+    def serial_recv_data_cb_register(self, recv_func):
         self.handle_recv_cb = recv_func
-        self.handle_write_cb = write_func
+
+    def serial_write(self, data):
+        if self.serial_ != 1:
+            if self.serial_.isOpen():
+                self.serial_.write(data)
+                return True
+            else:
+                return False
 
     def connect_serial(self, name, rate):
         # 创建Serial对象，初始化串口
         self.serial_ = serial.Serial(name, rate, timeout=1)  # Windows示例，COM1是串口号，9600是波特率，timeout是读超时时间
-        _thread.start_new_thread(self.communication_handle, ("Thread-window",))
+        if self.serial_.isOpen():
+            self.run_status = 1
+            _thread.start_new_thread(self.communication_handle, ("Thread-window",))
+        else:
+            return False
+        return True
 
     def disconnect_serial(self):
         self.serial_.close()
@@ -40,9 +50,12 @@ class c_wired_connect:  # 有线连接
     def communication_handle(self, threadName):  # 通信
         print("create", threadName)
         while self.run_status:
-            data = self.serial_.readline()
-            self.handle_recv_cb(data)
-            print(data)
+            if  self.serial_.isOpen():
+                data = self.serial_.readline()
+                self.handle_recv_cb(data)
+                print(data)
+            else:
+                self.run_status = 0
 
     def init_wired_connect(self):
         # _thread.start_new_thread(self.communication_handle, ("Thread-window", ))
