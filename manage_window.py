@@ -131,9 +131,10 @@ class c_window_manage:  # 窗口管理
     def win_fun_wifi_connect(self):
         self.wifi_password = self.test_wifi_pass.get("1.0", "end")  # 获取文本输入框的内容
         print("pass word:",self.wifi_password)  # 输出结果
-        serial_data = "发送WiFi->ssid:"+self.test_wifi_name+" password:"+self.wifi_password
-        self.win_fun_insert_serial_text(serial_data)
-        self.communicat_serial_write(serial_data)
+        reminder = "发送WiFi->ssid:"+self.test_wifi_name+" password:"+self.wifi_password
+        self.win_fun_insert_serial_text(reminder)
+        commend = "AT+CWJAP="+self.test_wifi_name+","+self.wifi_password
+        self.communicat_serial_write(commend)
 
         self.setting.update_setting(his_wifi_password=self.wifi_password)  # 把波特率储存到设置文件里
 
